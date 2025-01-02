@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mary Shooters</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+        }
+        header {
+            text-align: center;
+            padding: 10px;
+            background-color: #222;
+            color: #fff;
+        }
+        header img {
+            height: 50px;
+            vertical-align: middle;
+        }
+        header h1 {
+            display: inline;
+            margin-left: 10px;
+            font-size: 24px;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #222;
+            border: 2px solid #fff;
+        }
+        #controls {
+            text-align: center;
+            margin-top: 10px;
+        }
+        #controls button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #controls button:hover {
+            background-color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="logo.png" alt="Mary Shooters Logo">
+        <h1>Mary Shooters</h1>
+    </header>
+    <canvas id="gameCanvas"></canvas>
+    <div id="controls">
+        <button id="leftButton">Move Left</button>
+        <button id="rightButton">Move Right</button>
+        <button id="shootButton">Shoot</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas dimensions
+        canvas.width = 800;
+        canvas.height = 600;
+
+        // Game variables
+        const bubbles = [];
+        const bubbleRadius = 15;
+        const shooter = { x: canvas.width / 2, y: canvas.height - 30, dx: 0, dy: 0, radius: bubbleRadius, color: randomColor() };
+
+        // Generate random colors
+        function randomColor() {
+            const colors = ['red', 'blue', 'green', 'yellow', 'purple'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Create bubbles grid
+        function createBubbles() {
+            const rows = 6;
+            const cols = 10;
+            const padding = 10;
+            const offsetTop = 50;
+            const offsetLeft = 20;
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const x = col * (bubbleRadius * 2 + padding) + offsetLeft;
+                    const y = row * (bubbleRadius * 2 + padding) + offsetTop;
+                    bubbles.push({ x, y, radius: bubbleRadius, color: randomColor(), visible: true });
+                }
+            }
+        }
+
+        createBubbles();
+
+        // Draw bubbles
+        function drawBubbles() {
+            bubbles.forEach(bubble => {
+                if (bubble.visible) {
+                    ctx.beginPath();
+                    ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = bubble.color;
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            });
+        }
+
+        // Draw shooter bubble
+        function drawShooter() {
+            ctx.beginPath();
+            ctx.arc(shooter.x, shooter.y, shooter.radius, 0, Math.PI * 2);
+            ctx.fillStyle = shooter.color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        // Move shooter bubble
+        function moveShooter() {
+            shooter.x += shooter.dx;
+            shooter.y += shooter.dy;
+
+            if (shooter.y < 0) {
+                resetShooter();
+            }
+
+            bubbles.forEach(bubble => {
+                if (bubble.visible && collisionDetected(shooter, bubble)) {
+                    bubble.visible = false;
+                    resetShooter();
+                }
+            });
+        }
+
+        // Reset shooter bubble
+        function resetShooter() {
+            shooter.x = canvas.width / 2;
+            shooter.y = canvas.height - 30;
+            shooter.color = randomColor();
+            shooter.dx = 0;
+            shooter.dy = 0;
+        }
+
+        // Detect collision
+        function collisionDetected(a, b) {
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < a.radius + b.radius;
+        }
+
+        // Control buttons
+        const leftButton = document.getElementById('leftButton');
+        const rightButton = document.getElementById('rightButton');
+        const shootButton = document.getElementById('shootButton');
+
+        leftButton.addEventListener('click', () => {
+            shooter.x -= 20;
+            if (shooter.x < shooter.radius) {
+                shooter.x = shooter.radius;
+            }
+        });
+
+        rightButton.addEventListener('click', () => {
+            shooter.x += 20;
+            if (shooter.x > canvas.width - shooter.radius) {
+                shooter.x = canvas.width - shooter.radius;
+            }
+        });
+
+        shootButton.addEventListener('click', () => {
+            shooter.dy = -10;
+        });
+
+        // Game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawBubbles();
+            drawShooter();
+            moveShooter();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
